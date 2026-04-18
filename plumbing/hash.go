@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"hash"
 	"io"
+	"strings"
 )
 
 // Hash represents a SHA-1 hash of a git object.
@@ -18,9 +19,9 @@ var ZeroHash Hash
 
 // NewHash creates a new Hash from a hex string.
 // Returns ZeroHash if the string is invalid.
-// Note: also handles uppercase hex strings by normalizing via hex.DecodeString.
+// Handles both uppercase and lowercase hex strings.
 func NewHash(s string) Hash {
-	b, err := hex.DecodeString(s)
+	b, err := hex.DecodeString(strings.ToLower(s))
 	if err != nil || len(b) != 20 {
 		return ZeroHash
 	}
