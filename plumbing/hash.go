@@ -1,91 +1,79 @@
+// Package plumbing implements the core data structures and operations
+// for the go-git library.
 package plumbing
 
 import (
-	"crypto"
+	"crypto/sha1"
 	"encoding/hex"
+	"fmt"
 	"hash"
-	"sort"
-	"strconv"
-
-	format "github.com/go-git/go-git/v6/plumbing/format/config"
+	"io"
 )
 
-// Hash SHA1 hashed content
-type Hash = ObjectID
+// Hash represents a SHA-1 hash of a git object.
+type Hash [20]byte
 
-// ZeroHash is an ObjectID with value zero.
-var ZeroHash ObjectID
+// ZeroHash is the zero-value Hash, representing the absence of a hash.
+var ZeroHash Hash
 
-// NewHash return a new Hash based on a hexadecimal hash representation.
-// Invalid input results into an empty hash.
-//
-// deprecated: Use the new FromHex instead.
+// NewHash creates a new Hash from a hex string.
+// Returns ZeroHash if the string is invalid.
 func NewHash(s string) Hash {
-	h, _ := FromHex(s)
+	b, err := hex.DecodeString(s)
+	if err != nil || len(b) != 20 {
+		return ZeroHash
+	}
+
+	var h Hash
+	copy(h[:], b)
 	return h
 }
 
-// Hasher wraps a hash.Hash to compute git object hashes.
-type Hasher struct {
-	hash.Hash
-	format format.ObjectFormat
+// String returns the hex string representation of the Hash.
+func (h Hash) String() string {
+	return hex.EncodeToString(h[:])
 }
 
-// NewHasher returns a new Hasher for the given object format, type and size.
-func NewHasher(f format.ObjectFormat, t ObjectType, size int64) Hasher {
-	h := Hasher{format: f}
-	switch f {
-	case format.SHA256:
-		h.Hash = crypto.SHA256.New()
-	default:
-		// Use SHA1 by default
-		// TODO: return error when format is not supported
-		h.Hash = crypto.SHA1.New()
-	}
-	h.Reset(t, size)
-	return h
+// IsZero returns true if the Hash is the zero-value Hash.
+func (h Hash) IsZero() bool {
+	return h == ZeroHash
 }
 
-// Reset resets the hasher with a new object type and size.
-func (h Hasher) Reset(t ObjectType, size int64) {
-	h.Hash.Reset()
-	h.Write(t.Bytes())
-	h.Write([]byte(" "))
-	h.Write([]byte(strconv.FormatInt(size, 10)))
-	h.Write([]byte{0})
-}
+// ComputeHash computes the SHA-1 hash of the given object type and content.
+// Git hashes are computed as: sha1("<type> <size>\0<content>").
+func ComputeHash(t ObjectType, content []byte) Hash {
+	h := sha1.New()
+	_, _ = fmt.Fprintf(h, "%s %d\x00", t, len(content))
+	_, _ = h.Write(content)
 
-// Sum returns the computed hash.
-func (h Hasher) Sum() (hash Hash) {
-	if h.format == format.SHA256 {
-		hash.format = h.format
-	} else {
-		hash.format = format.UnsetObjectFormat
-	}
-	_, _ = hash.Write(h.Hash.Sum(nil))
+	var hash Hash
+	copy(hash[:], h.Sum(nil))
 	return hash
 }
 
-// HashesSort sorts a slice of Hashes in increasing order.
-func HashesSort(a []Hash) {
-	sort.Sort(HashSlice(a))
+// NewHasher returns a new hasher that computes the SHA-1 hash of a git object.
+func NewHasher(t ObjectType, size int64) (hash.Hash, error) {
+	h := sha1.New()
+	_, err := fmt.Fprintf(h, "%s %d\x00", t, size)
+	if err != nil {
+		return nil, err
+	}
+	return h, nil
 }
 
-// HashSlice attaches the methods of sort.Interface to []Hash, sorting in
-// increasing order.
-type HashSlice []Hash
-
-func (p HashSlice) Len() int           { return len(p) }
-func (p HashSlice) Less(i, j int) bool { return p[i].Compare(p[j].Bytes()) < 0 }
-func (p HashSlice) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
-
-// IsHash returns true if the given string is a valid hash.
-func IsHash(s string) bool {
-	switch len(s) {
-	case format.SHA1HexSize, format.SHA256HexSize:
-		_, err := hex.DecodeString(s)
-		return err == nil
-	default:
-		return false
+// HashReader computes the hash of the content read from r, treating it as
+// an object of the given type with the given size.
+func HashReader(t ObjectType, size int64, r io.Reader) (Hash, error) {
+	h, err := NewHasher(t, size)
+	if err != nil {
+		return ZeroHash, err
 	}
+
+	if _, err := io.Copy(h, r); err != nil {
+		return ZeroHash, err
+	}
+
+	var result Hash
+	copy(result[:], h.Sum(nil))
+	return result, nil
 }
