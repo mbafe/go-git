@@ -18,6 +18,7 @@ var ZeroHash Hash
 
 // NewHash creates a new Hash from a hex string.
 // Returns ZeroHash if the string is invalid.
+// Note: also handles uppercase hex strings by normalizing via hex.DecodeString.
 func NewHash(s string) Hash {
 	b, err := hex.DecodeString(s)
 	if err != nil || len(b) != 20 {
@@ -52,6 +53,7 @@ func ComputeHash(t ObjectType, content []byte) Hash {
 }
 
 // NewHasher returns a new hasher that computes the SHA-1 hash of a git object.
+// The returned hash.Hash already has the git object header written into it.
 func NewHasher(t ObjectType, size int64) (hash.Hash, error) {
 	h := sha1.New()
 	_, err := fmt.Fprintf(h, "%s %d\x00", t, size)
