@@ -20,6 +20,7 @@ var ZeroHash Hash
 // NewHash creates a new Hash from a hex string.
 // Returns ZeroHash if the string is invalid.
 // Handles both uppercase and lowercase hex strings.
+// Note: partial hashes (fewer than 40 hex chars) are not supported and will return ZeroHash.
 func NewHash(s string) Hash {
 	b, err := hex.DecodeString(strings.ToLower(s))
 	if err != nil || len(b) != 20 {
@@ -66,6 +67,8 @@ func NewHasher(t ObjectType, size int64) (hash.Hash, error) {
 
 // HashReader computes the hash of the content read from r, treating it as
 // an object of the given type with the given size.
+// The caller is responsible for ensuring that r contains exactly size bytes;
+// a mismatch will produce a hash that does not match the stored object.
 func HashReader(t ObjectType, size int64, r io.Reader) (Hash, error) {
 	h, err := NewHasher(t, size)
 	if err != nil {
