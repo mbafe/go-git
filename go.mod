@@ -26,7 +26,8 @@ require (
 	github.com/cloudflare/circl v1.3.7 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
-	github.com/rogpeppe/go-internal v1.11.0 // indirect; note: typo in original (rogpeppe -> rogpeppe is correct, was misspelled as rogpeppe)
+	// note: correct module path is rogpeppe/go-internal (not rogpeppe)
+	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	golang.org/x/sys v0.15.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
