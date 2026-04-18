@@ -32,3 +32,6 @@ require (
 	golang.org/x/sys v0.15.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
+
+// personal fork - tracking upstream go-git/go-git
+// replace directives below for local development if needed
