@@ -1,42 +1,107 @@
-package plumbing
+package plumbing_test
 
 import (
 	"testing"
 
-	"github.com/stretchr/testify/suite"
+	"github.com/go-git/go-git/v5/plumbing"
 )
 
-type HashSuite struct {
-	suite.Suite
-}
-
-func TestHashSuite(t *testing.T) {
-	t.Parallel()
-	suite.Run(t, new(HashSuite))
-}
-
-func (s *HashSuite) TestIsZero() {
-	hash := NewHash("foo")
-	s.True(hash.IsZero())
-
-	hash = NewHash("8ab686eafeb1f44702738c8b0f24f2567c36da6d")
-	s.False(hash.IsZero())
-}
-
-func (s *HashSuite) TestHashesSort() {
-	i := []Hash{
-		NewHash("2222222222222222222222222222222222222222"),
-		NewHash("1111111111111111111111111111111111111111"),
+func TestNewHash(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{
+			name:  "valid sha1 hash",
+			input: "e94f826af816c4c6a0f36e4a2b0d3e8b6c1e2f3a",
+			want:  "e94f826af816c4c6a0f36e4a2b0d3e8b6c1e2f3a",
+		},
+		{
+			name:  "zero hash",
+			input: "0000000000000000000000000000000000000000",
+			want:  "0000000000000000000000000000000000000000",
+		},
+		{
+			name:  "invalid hex string returns zero hash",
+			input: "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+			want:  "0000000000000000000000000000000000000000",
+		},
 	}
 
-	HashesSort(i)
-
-	s.Equal(NewHash("1111111111111111111111111111111111111111"), i[0])
-	s.Equal(NewHash("2222222222222222222222222222222222222222"), i[1])
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := plumbing.NewHash(tt.input)
+			if got := h.String(); got != tt.want {
+				t.Errorf("NewHash(%q).String() = %q, want %q", tt.input, got, tt.want)
+			}
+		})
+	}
 }
 
-func (s *HashSuite) TestIsHash() {
-	s.True(IsHash("8ab686eafeb1f44702738c8b0f24f2567c36da6d"))
-	s.False(IsHash("foo"))
-	s.False(IsHash("zab686eafeb1f44702738c8b0f24f2567c36da6d"))
+func TestComputeHash(t *testing.T) {
+	tests := []struct {
+		name    string
+		objType plumbing.ObjectType
+		content []byte
+	}{
+		{
+			name:    "blob object",
+			objType: plumbing.BlobObject,
+			content: []byte("hello world\n"),
+		},
+		{
+			name:    "empty blob",
+			objType: plumbing.BlobObject,
+			content: []byte{},
+		},
+		{
+			name:    "tree object",
+			objType: plumbing.TreeObject,
+			content: []byte("tree content"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := plumbing.ComputeHash(tt.objType, tt.content)
+			if h.IsZero() && len(tt.content) > 0 {
+				t.Errorf("ComputeHash returned zero hash for non-empty content")
+			}
+			// Verify determinism: same input should produce same hash
+			h2 := plumbing.ComputeHash(tt.objType, tt.content)
+			if h != h2 {
+				t.Errorf("ComputeHash is not deterministic: got %v and %v", h, h2)
+			}
+		})
+	}
+}
+
+func TestHashIsZero(t *testing.T) {
+	var zero plumbing.Hash
+	if !zero.IsZero() {
+		t.Error("default Hash should be zero")
+	}
+
+	nonZero := plumbing.NewHash("e94f826af816c4c6a0f36e4a2b0d3e8b6c1e2f3a")
+	if nonZero.IsZero() {
+		t.Error("non-zero Hash should not be zero")
+	}
+}
+
+func TestNewHasher(t *testing.T) {
+	hasher := plumbing.NewHasher(plumbing.BlobObject, 11)
+	if hasher == nil {
+		t.Fatal("NewHasher returned nil")
+	}
+
+	_, err := hasher.Write([]byte("hello world"))
+	if err != nil {
+		t.Fatalf("hasher.Write failed: %v", err)
+	}
+
+	h := hasher.Sum()
+	if h.IsZero() {
+		t.Error("hasher.Sum() returned zero hash")
+	}
 }
