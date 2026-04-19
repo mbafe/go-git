@@ -35,3 +35,7 @@ require (
 
 // personal fork - tracking upstream go-git/go-git
 // replace directives below for local development if needed
+
+// NOTE: dub.sh/plumbing uses a placeholder version; replace with the actual
+// go-git/go-billy or go-git/go-git plumbing path once upstream stabilizes.
+// replace dub.sh/plumbing => github.com/go-git/go-git/v5/plumbing v0.0.0
