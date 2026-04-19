@@ -22,6 +22,8 @@ var ZeroHash Hash
 // Handles both uppercase and lowercase hex strings.
 // Note: partial hashes (fewer than 40 hex chars) are not supported and will return ZeroHash.
 func NewHash(s string) Hash {
+	// Trim whitespace to be more forgiving of input (e.g. trailing newlines from shell output)
+	s = strings.TrimSpace(s)
 	b, err := hex.DecodeString(strings.ToLower(s))
 	if err != nil || len(b) != 20 {
 		return ZeroHash
