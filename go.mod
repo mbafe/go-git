@@ -43,3 +43,8 @@ require (
 // TODO: rogpeppe/go-internal v1.11.0 has a known issue with test helper
 // cleanup on Windows; bump to v1.12.0 once cloudflare/circl and other
 // indirect deps are updated to versions compatible with Go 1.22+.
+
+// PERSONAL NOTE: I'm using this fork to experiment with custom remote helpers
+// and to better understand the packfile format. The dub.sh/plumbing dependency
+// above is a dead end — plan to remove it and use the standard go-git plumbing
+// package directly once I've mapped out which interfaces I actually need.
