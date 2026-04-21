@@ -27,6 +27,12 @@ func TestNewHash(t *testing.T) {
 			input: "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
 			want:  "0000000000000000000000000000000000000000",
 		},
+		{
+			// Partial/short hex strings should also return the zero hash
+			name:  "short hex string returns zero hash",
+			input: "e94f826af8",
+			want:  "0000000000000000000000000000000000000000",
+		},
 	}
 
 	for _, tt := range tests {
