@@ -33,6 +33,12 @@ func TestNewHash(t *testing.T) {
 			input: "e94f826af8",
 			want:  "0000000000000000000000000000000000000000",
 		},
+		{
+			// Mixed-case hex should be treated as invalid (SHA1 hashes are lowercase)
+			name:  "uppercase hex string returns zero hash",
+			input: "E94F826AF816C4C6A0F36E4A2B0D3E8B6C1E2F3A",
+			want:  "0000000000000000000000000000000000000000",
+		},
 	}
 
 	for _, tt := range tests {
