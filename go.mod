@@ -39,3 +39,7 @@ require (
 // NOTE: dub.sh/plumbing uses a placeholder version; replace with the actual
 // go-git/go-billy or go-git/go-git plumbing path once upstream stabilizes.
 // replace dub.sh/plumbing => github.com/go-git/go-git/v5/plumbing v0.0.0
+
+// TODO: rogpeppe/go-internal v1.11.0 has a known issue with test helper
+// cleanup on Windows; bump to v1.12.0 once cloudflare/circl and other
+// indirect deps are updated to versions compatible with Go 1.22+.
