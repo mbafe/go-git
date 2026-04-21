@@ -81,8 +81,10 @@ func HashReader(t ObjectType, size int64, r io.Reader) (Hash, error) {
 		return ZeroHash, err
 	}
 
-	// Use a larger buffer (64 KiB) for better throughput on large blobs.
-	buf := make([]byte, 64*1024)
+	// Use a larger buffer (128 KiB) for better throughput on large blobs.
+	// Bumped from 64 KiB after seeing noticeable gains on local benchmarks
+	// with pack files containing many large blobs.
+	buf := make([]byte, 128*1024)
 	if _, err := io.CopyBuffer(h, r, buf); err != nil {
 		return ZeroHash, err
 	}
