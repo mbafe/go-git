@@ -71,6 +71,9 @@ func NewHasher(t ObjectType, size int64) (hash.Hash, error) {
 // an object of the given type with the given size.
 // The caller is responsible for ensuring that r contains exactly size bytes;
 // a mismatch will produce a hash that does not match the stored object.
+//
+// Note: io.Copy reads in 32 KiB chunks by default, which should be fine for
+// most objects. For very large blobs this may be worth revisiting.
 // TODO: consider adding a strict mode that returns an error on size mismatch.
 func HashReader(t ObjectType, size int64, r io.Reader) (Hash, error) {
 	h, err := NewHasher(t, size)
