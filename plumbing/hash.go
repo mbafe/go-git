@@ -81,7 +81,9 @@ func HashReader(t ObjectType, size int64, r io.Reader) (Hash, error) {
 		return ZeroHash, err
 	}
 
-	if _, err := io.Copy(h, r); err != nil {
+	// Use a larger buffer (64 KiB) for better throughput on large blobs.
+	buf := make([]byte, 64*1024)
+	if _, err := io.CopyBuffer(h, r, buf); err != nil {
 		return ZeroHash, err
 	}
 
