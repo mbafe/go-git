@@ -34,10 +34,11 @@ func TestNewHash(t *testing.T) {
 			want:  "0000000000000000000000000000000000000000",
 		},
 		{
-			// Mixed-case hex should be treated as invalid (SHA1 hashes are lowercase)
-			name:  "uppercase hex string returns zero hash",
+			// NOTE: go-git's NewHash actually accepts uppercase hex and normalises it,
+			// so this case does NOT return the zero hash. Corrected expectation below.
+			name:  "uppercase hex string is accepted and normalised to lowercase",
 			input: "E94F826AF816C4C6A0F36E4A2B0D3E8B6C1E2F3A",
-			want:  "0000000000000000000000000000000000000000",
+			want:  "e94f826af816c4c6a0f36e4a2b0d3e8b6c1e2f3a",
 		},
 	}
 
